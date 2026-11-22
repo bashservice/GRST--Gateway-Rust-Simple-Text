@@ -1,0 +1,12 @@
+[package]
+name = "grst-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+image = "0.25"
+base64 = "0.22"
+
+[[bin]]
+name = "retro_test"
+
