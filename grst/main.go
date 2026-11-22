@@ -18,13 +18,22 @@ import (
 
 const statsFileName = "stats.json"
 
+var outboundHTTPClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        64,
+		MaxIdleConnsPerHost: 8,
+		IdleConnTimeout:     45 * time.Second,
+	},
+}
+
 var blockedDomains = map[string]bool{
-	"doubleclick.net":        true,
-	"googlesyndication.com":  true,
-	"google-analytics.com":   true,
-	"googletagmanager.com":   true,
-	"gemius.pl":              true,
-	"ads.pubmatic.com":       true,
+	"doubleclick.net":       true,
+	"googlesyndication.com": true,
+	"google-analytics.com":  true,
+	"googletagmanager.com":  true,
+	"gemius.pl":             true,
+	"ads.pubmatic.com":      true,
 }
 
 var trackingParams = map[string]bool{
@@ -166,7 +175,6 @@ func collapseBlankLines(input string) string {
 
 	for _, line := range lines {
 		trimmedLine := strings.TrimSpace(line)
-		// Zagęszczamy wielokrotne spacje wewnątrz linii
 		cleanedLine := strings.Join(strings.Fields(trimmedLine), " ")
 		if cleanedLine == "" {
 			emptyStreak++
@@ -339,7 +347,6 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil {
 		http.Error(w, "Błędny URL: "+err.Error(), http.StatusBadRequest)
@@ -347,7 +354,7 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Header.Set("User-Agent", "GRST-LynxLite/0.1")
 
-	resp, err := client.Do(req)
+	resp, err := outboundHTTPClient.Do(req)
 	if err != nil {
 		http.Error(w, "Błąd pobierania: "+err.Error(), http.StatusBadGateway)
 		return
