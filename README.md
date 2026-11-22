@@ -5,58 +5,6 @@ Terminalowa przeglądarka internetowa (TUI) napisana w języku **Rust**, inspiro
 
 https://github.com/user-attachments/assets/e7412cf4-0d02-4058-b0d3-6db76aec7714
 
-### Analiza backendu (`grst-proxy` w Go)
-
-* **Rola w ekosystemie:** Lokalny serwer HTTP działający na porcie `:8080` (`module grst`, Go 1.27.4), który pełni funkcję **bramki odchudzającej i filtrującej ruch sieciowy** (w stylu przeglądarki tekstowej *Lynx*) dla klienta `grst-cli`.
-
-
-* **Przetwarzanie HTML (`extractLynxView`):**
-* Wykorzystuje `golang.org/x/net/html` do parsowania drzewa DOM.
-
-
-* Całkowicie wycina zbędne dla terminala elementy: `<script>`, `<style>`, `<noscript>`, `<svg>`.
-
-
-* Zamienia tagi `<a>`, `<img>`, `<video>` na ustrukturyzowane znaczniki tekstowe zrozumiałe dla parsera w Rust (`[1: Etykieta -> URL]`, `[OBRAZ: alt -> src]`, `[WIDEO -> src]`).
-
-
-* Rozwiązuje relatywne ścieżki względem bazowego URL i zagęszcza puste linie oraz nadmiarowe białe znaki (`collapseBlankLines`).
-
-
-
-
-* **Prywatność i AdBlock (wbudowane filtry):**
-* **Blokada domen (`blockedDomains`):** Odrzuca żądania oraz zasoby z domen reklamowych i analitycznych (`doubleclick.net`, `googlesyndication.com`, `google-analytics.com`, `googletagmanager.com`, `gemius.pl`, `ads.pubmatic.com`) — zarówno na poziomie całej strony (`HTTP 403`), jak i pojedynczych linków/obrazów w DOM.
-
-
-* **Czyszczenie URL (`cleanTrackingURL`):** Automatycznie usuwa z odnośników parametry śledzące (`utm_*`, `fbclid`, `gclid`, `src`, `tpcc`).
-
-
-
-
-* **Telemetria i oszczędność transferu (`stats.json`):**
-* Atomowo zapisuje statystyki (zapis do pliku `.tmp` + `os.Rename` pod kontrolą `sync.Mutex`) do `stats.json` (lub ścieżki z `GRST_STATS_FILE`).
-
-
-* Przykładowo w załączonym `stats.json` (po 256 pobranych stronach): z **~42,15 MB** surowego HTML proxy zredukowało ruch do **~3,08 MB** czystego tekstu — dając **~92,7% oszczędności transferu** (ponad **39 MB** zaoszczędzonych danych).
-
-
-
-
-* **Uwaga techniczna (integracja Rust ↔ Go):**
-* W `main.rs` przy otwieraniu obrazów i wideo klient wywołuje `/fetch?url=<media_url>` bez `raw=1`, natomiast `fetchHandler` w `main.go` zawsze parsuje odpowiedź jako HTML przez `extractLynxView` i zwraca JSON (`FetchResult`) lub tekst, zamiast przekazywać surowe bajty binarne obrazów/wideo. Dodanie trybu passthrough (np. `/fetch?url=...&binary=1` lub wykrywania nagłówka `Content-Type` innego niż `text/html`) pozwoli na bezpośrednie pobieranie plików graficznych i wideo przez proxy.
-
-
-
-
-
----
-
-### Zaktualizowany plik `README.md` na GitHub
-
-```markdown
-# 🖥️ GRST — Hybrydowa Przeglądarka Terminalowa (Go Proxy + Rust TUI)
-
 **GRST** to lekki, dwuczęściowy system przeglądania sieci w terminalu, zaprojektowany z myślą o maksymalnej oszczędności transferu, prywatności i estetyce retro:
 1. **`grst-proxy` (Go):** Lokalny serwer proxy filtrujący reklamy, trackery i zbędny kod (JS/CSS/SVG), konwertujący strony HTML do lekkiego formatu tekstowego (redukcja rozmiaru stron o **~90%**).
 2. **`grst-cli` (Rust):** Klient terminalowy (TUI) stylizowany na **Midnight Commander**, który osadza binarkę proxy w sobie, renderuje treść oraz wyświetla obrazy w czarno-białej grafice **Braille'a (1980 B&W)** i obsługuje audio **OGG**.
