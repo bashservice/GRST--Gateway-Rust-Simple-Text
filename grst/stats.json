@@ -1,0 +1,10 @@
+{
+  "pages_fetched": 256,
+  "total_raw_bytes": 44192944,
+  "total_clean_bytes": 3231459,
+  "total_saved_bytes": 40961485,
+  "skipped_images": 2585,
+  "skipped_videos": 13,
+  "skipped_links": 5131,
+  "blocked_domains": 0
+}
